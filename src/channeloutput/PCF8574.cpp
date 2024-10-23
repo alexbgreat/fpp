@@ -160,7 +160,20 @@ int PCF8574Output::Init(Json::Value config) {
         m_pinOrderingInvert = config["pinOrderingInvert"].asInt();
     }
 
-    m_lastVal = 0xFF;
+    unsigned char output_byte = 0;
+    //Initialize all channels to off, taking into account inverted pins
+    for (int x = 0; x < m_channelCount; x++, c++) {
+            unsigned char pinValue = 0;
+            pinValue ^= (m_ports[x].m_invert);
+
+            if (m_pinOrderingInvert) {
+                output_byte |= (pinValue << x);
+            } else {
+                output_byte |= (pinValue << (7 - x));
+            }
+    }
+        m_lastVal = output_byte;
+        i2c->writeByte(output_byte);
 
     return ChannelOutput::Init(config);
 }
@@ -181,7 +194,7 @@ int PCF8574Output::SendData(unsigned char* channelData) {
     LogExcess(VB_CHANNELOUT, "PCF8574Output::SendData(%p)\n", channelData);
 
     unsigned char* c = channelData;
-    unsigned char byte1 = 0;
+    unsigned char output_byte = 0;
 
     for (int x = 0; x < m_channelCount; x++, c++) {
         unsigned char pinValue;
@@ -195,7 +208,7 @@ int PCF8574Output::SendData(unsigned char* channelData) {
             pinValue = ((*c) > m_ports[x].m_threshold);
             break;
 
-        case 2: // Hysteresis trigger
+        case 2: // Hysteresis trigger 
             if (m_ports[x].m_lastState == 0) {
                 pinValue = ((*c) > m_ports[x].m_hysteresisUpper);
 
@@ -213,18 +226,18 @@ int PCF8574Output::SendData(unsigned char* channelData) {
         pinValue ^= (m_ports[x].m_invert);
 
         if (m_pinOrderingInvert) {
-            byte1 |= (pinValue << x);
+            output_byte |= (pinValue << x);
         } else {
-            byte1 |= (pinValue << (7 - x));
+            output_byte |= (pinValue << (7 - x));
         }
     }
 
     LogExcess(VB_CHANNELOUT,
               "Byte: 0b" BYTETOBINARYPATTERN "\n",
-              BYTETOBINARY(byte1));
-    if (byte1 != m_lastVal) {
-        m_lastVal = byte1;
-        i2c->writeByte(byte1);
+              BYTETOBINARY(output_byte));
+    if (output_byte != m_lastVal) {
+        m_lastVal = output_byte;
+        i2c->writeByte(output_byte);
     }
 
     return m_channelCount;

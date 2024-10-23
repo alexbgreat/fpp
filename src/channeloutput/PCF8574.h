@@ -35,7 +35,7 @@ private:
 
     class PCF8574Port {
     public:
-        unsigned char m_invert = 0;
+        bool m_invert = false;
         unsigned char m_pinmode = 0;
         unsigned char m_threshold = 128;
         unsigned char m_hysteresisUpper = 192;
@@ -45,6 +45,6 @@ private:
 
     int m_deviceID;
     PCF8574Port m_ports[8];
-    unsigned char m_pinOrderingInvert;
+    bool m_pinOrderingInvert = false;
     unsigned char m_lastVal = 0xFF;
 };
