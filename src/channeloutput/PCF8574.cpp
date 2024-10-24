@@ -162,7 +162,7 @@ int PCF8574Output::Init(Json::Value config) {
 
     unsigned char output_byte = 0;
     //Initialize all channels to off, taking into account inverted pins
-    for (int x = 0; x < m_channelCount; x++, c++) {
+    for (int x = 0; x < m_channelCount; x++) {
             unsigned char pinValue = 0;
             pinValue ^= (m_ports[x].m_invert);
 
